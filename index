@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生課程進度與提醒系統</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --danger-bg: #fef2f2;
+      --danger-text: #dc2626;
+      --danger-border: #fecaca;
+      --success-bg: #f0fdf4;
+      --success-text: #16a34a;
+      --success-border: #bbf7d0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .header-card {
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* 區塊格線 */
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 868px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 表單區塊 */
+    .form-card {
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      height: fit-content;
+    }
+
+    .form-card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    /* 列表與篩選區塊 */
+    .data-card {
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .filter-group select {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .stats-badge {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .stats-badge strong {
+      color: var(--text-main);
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.925rem;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      padding: 12px;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-danger {
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+
+    .badge-success {
+      background-color: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    .badge-teacher {
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .message-box {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .message-success {
+      background-color: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    .message-error {
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 頁首說明 -->
+  <div class="header-card">
+    <h1>🎓 學生課程進度與到期提醒系統</h1>
+    <p class="subtitle">追蹤學生 7 個月 40 堂課進度。進入第 6 個月且剩餘超過 8 堂課時自動發出提醒警示。</p>
+  </div>
+
+  <div class="grid-layout">
+    <!-- 新增學生表單區塊 -->
+    <div class="form-card">
+      <h2>➕ 新增學生</h2>
+      <div id="formMessage" class="message-box"></div>
+      <form id="addStudentForm">
+        <div class="form-group">
+          <label for="studentName">學生姓名 *</label>
+          <input type="text" id="studentName" placeholder="例如：王小明" required>
+        </div>
+
+        <div class="form-group">
+          <label for="teacherName">指導老師 *</label>
+          <input type="text" id="teacherName" placeholder="例如：林老師 (未填寫預設未指定)">
+        </div>
+
+        <div class="form-group">
+          <label for="startDate">起課日 *</label>
+          <input type="date" id="startDate" required>
+        </div>
+
+        <div class="form-group">
+          <label for="totalClasses">總堂數 *</label>
+          <input type="number" id="totalClasses" value="40" min="1" required>
+        </div>
+
+        <div class="form-group">
+          <label for="attendedClasses">已上堂數</label>
+          <input type="number" id="attendedClasses" value="0" min="0" required>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">確認新增學生</button>
+      </form>
+    </div>
+
+    <!-- 學生列表與統計區塊 -->
+    <div class="data-card">
+      <div class="toolbar">
+        <div class="filter-group">
+          <label for="teacherFilter">篩選老師：</label>
+          <select id="teacherFilter" onchange="filterData()">
+            <option value="ALL">全體老師</option>
+          </select>
+        </div>
+        <div class="stats-badge" id="statsText">
+          總計：<strong>0</strong> 位學生 | 需提醒：<strong style="color: var(--danger-text);">0</strong> 位
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>學生姓名</th>
+              <th>指導老師</th>
+              <th>起課日</th>
+              <th>課程訖日</th>
+              <th>目前月數</th>
+              <th>已上 / 總堂數</th>
+              <th>剩餘堂數</th>
+              <th>提醒狀態</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                資料載入中，請稍候...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 已嵌入您的 Google Apps Script 部署 API 網址
+  const API_URL = "https://script.google.com/macros/s/AKfycbx1UOODVm2NdIqzKnDctA7qHRuhK1owhbEfwaq6FZUYtAJvhKYuexPYDHljGBsivhKSAg/exec";
+
+  let allStudentsData = [];
+
+  // 頁面載入時取得資料與預設今日日期
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("startDate").valueAsDate = new Date();
+    loadStudentData();
+  });
+
+  // 1. 從 GAS API 取得學生名單
+  async function loadStudentData() {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      allStudentsData = data;
+
+      updateTeacherFilterOptions(data);
+      renderTable(data);
+    } catch (error) {
+      console.error("載入失敗:", error);
+      document.getElementById("studentTableBody").innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color: var(--danger-text); padding: 30px;">
+            ❌ 資料載入失敗，請確認 API 網址權限是否開放為「所有人 (Anyone)」。
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // 2. 自動更新「老師選單」下拉選項
+  function updateTeacherFilterOptions(data) {
+    const filterSelect = document.getElementById("teacherFilter");
+    const currentSelected = filterSelect.value;
+    
+    // 收集所有出現過的老師
+    const teachers = Array.from(new Set(data.map(s => s.teacher || "未指定"))).filter(Boolean);
+
+    filterSelect.innerHTML = '<option value="ALL">全體老師</option>';
+    teachers.forEach(teacher => {
+      const opt = document.createElement("option");
+      opt.value = teacher;
+      opt.textContent = teacher;
+      filterSelect.appendChild(opt);
+    });
+
+    if (teachers.includes(currentSelected)) {
+      filterSelect.value = currentSelected;
+    }
+  }
+
+  // 3. 根據選取的老師篩選與渲染表格
+  function filterData() {
+    const selectedTeacher = document.getElementById("teacherFilter").value;
+    let filtered = allStudentsData;
+
+    if (selectedTeacher !== "ALL") {
+      filtered = allStudentsData.filter(s => (s.teacher || "未指定") === selectedTeacher);
+    }
+
+    renderTable(filtered);
+  }
+
+  // 4. 渲染表格內容與更新統計
+  function renderTable(data) {
+    const tbody = document.getElementById("studentTableBody");
+    tbody.innerHTML = "";
+
+    let warningCount = 0;
+
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 30px;">
+            尚無符合條件的學生資料。
+          </td>
+        </tr>
+      `;
+      document.getElementById("statsText").innerHTML = `總計：<strong>0</strong> 位學生 | 需提醒：<strong style="color: var(--danger-text);">0</strong> 位`;
+      return;
+    }
+
+    data.forEach(s => {
+      if (s.isWarning) warningCount++;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td><span class="badge badge-teacher">${escapeHtml(s.teacher || "未指定")}</span></td>
+        <td>${s.startDate}</td>
+        <td>${s.endDate}</td>
+        <td>第 ${s.currentMonth} 個月</td>
+        <td>${s.attendedClasses} / ${s.totalClasses}</td>
+        <td>${s.remainingClasses} 堂</td>
+        <td>
+          <span class="badge ${s.isWarning ? 'badge-danger' : 'badge-success'}">
+            ${s.statusText}
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("statsText").innerHTML = `
+      總計：<strong>${data.length}</strong> 位學生 | 需提醒：<strong style="color: var(--danger-text);">${warningCount}</strong> 位
+    `;
+  }
+
+  // 5. 處理「新增學生」表單提交
+  document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById("submitBtn");
+    const msgBox = document.getElementById("formMessage");
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = "資料儲存中...";
+    msgBox.style.display = "none";
+
+    const payload = {
+      action: "addStudent",
+      name: document.getElementById("studentName").value.trim(),
+      teacher: document.getElementById("teacherName").value.trim() || "未指定",
+      startDate: document.getElementById("startDate").value,
+      totalClasses: Number(document.getElementById("totalClasses").value),
+      attendedClasses: Number(document.getElementById("attendedClasses").value)
+    };
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        msgBox.className = "message-box message-success";
+        msgBox.textContent = "✅ 新增學生成功！";
+        msgBox.style.display = "block";
+
+        // 重置表單
+        document.getElementById("studentName").value = "";
+        document.getElementById("teacherName").value = "";
+        document.getElementById("attendedClasses").value = "0";
+        document.getElementById("startDate").valueAsDate = new Date();
+
+        // 重新載入列表
+        await loadStudentData();
+      } else {
+        throw new Error(result.message || "儲存失敗");
+      }
+    } catch (error) {
+      console.error("提交失敗:", error);
+      msgBox.className = "message-box message-error";
+      msgBox.textContent = "❌ 新增失敗：" + error.message;
+      msgBox.style.display = "block";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "確認新增學生";
+    }
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+</script>
+
+</body>
+</html>
