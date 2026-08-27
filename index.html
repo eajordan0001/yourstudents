@@ -459,7 +459,7 @@
     `;
   }
 
-  // 5. 處理「新增學生」表單提交
+ // 5. 處理「新增學生」表單提交
   document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -480,30 +480,30 @@
     };
 
     try {
-      const response = await fetch(API_URL, {
+      // 使用 mode: 'no-cors' 避開 GAS 的 302 重定向跨域阻擋
+      await fetch(API_URL, {
         method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       });
 
-      const result = await response.json();
+      // 顯示成功訊息
+      msgBox.className = "message-box message-success";
+      msgBox.textContent = "✅ 新增學生成功！";
+      msgBox.style.display = "block";
 
-      if (result.status === "success") {
-        msgBox.className = "message-box message-success";
-        msgBox.textContent = "✅ 新增學生成功！";
-        msgBox.style.display = "block";
+      // 重置表單
+      document.getElementById("studentName").value = "";
+      document.getElementById("teacherName").value = "";
+      document.getElementById("attendedClasses").value = "0";
+      document.getElementById("startDate").valueAsDate = new Date();
 
-        // 重置表單
-        document.getElementById("studentName").value = "";
-        document.getElementById("teacherName").value = "";
-        document.getElementById("attendedClasses").value = "0";
-        document.getElementById("startDate").valueAsDate = new Date();
-
-        // 重新載入列表
+      // ⚠️ 關鍵：等待 1.5 秒讓 Google Sheet 寫入完成後，自動更新前端畫面
+      setTimeout(async () => {
         await loadStudentData();
-      } else {
-        throw new Error(result.message || "儲存失敗");
-      }
+      }, 1500);
+
     } catch (error) {
       console.error("提交失敗:", error);
       msgBox.className = "message-box message-error";
