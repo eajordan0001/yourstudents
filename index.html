@@ -360,10 +360,13 @@
     loadStudentData();
   });
 
-  // 1. 從 GAS API 取得學生名單
+  // 1. 從 GAS API 取得學生名單（已加入防快取機制）
   async function loadStudentData() {
     try {
-      const response = await fetch(API_URL);
+      // 加上時間戳記，強制瀏覽器每一次都拿試算表的最新資料
+      const cacheBusterUrl = `${API_URL}${API_URL.includes('?') ? '&' : '?'}_t=${new Date().getTime()}`;
+
+      const response = await fetch(cacheBusterUrl);
       const data = await response.json();
       allStudentsData = data;
 
