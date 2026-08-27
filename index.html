@@ -283,9 +283,19 @@
           <input type="text" id="studentName" placeholder="例如：王小明" required>
         </div>
 
+        <!-- 依指定調整：指導老師改為下拉選單 -->
         <div class="form-group">
           <label for="teacherName">指導老師 *</label>
-          <input type="text" id="teacherName" placeholder="例如：林老師 (未填寫預設未指定)">
+          <select id="teacherName" required>
+            <option value="" disabled selected>請選擇老師</option>
+            <option value="晶晶">晶晶</option>
+            <option value="怡如">怡如</option>
+            <option value="瑄瑄">瑄瑄</option>
+            <option value="嘉綾">嘉綾</option>
+            <option value="佳佳">佳佳</option>
+            <option value="婷婷">婷婷</option>
+            <option value="曉萍">曉萍</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -298,9 +308,10 @@
           <input type="number" id="totalClasses" value="40" min="1" required>
         </div>
 
+        <!-- 依指定調整：已上堂數預設值改為 placeholder 虛擬顯示 -->
         <div class="form-group">
           <label for="attendedClasses">已上堂數</label>
-          <input type="number" id="attendedClasses" value="0" min="0" required>
+          <input type="number" id="attendedClasses" placeholder="0" min="0">
         </div>
 
         <button type="submit" id="submitBtn" class="btn-submit">確認新增學生</button>
@@ -363,9 +374,7 @@
   // 1. 從 GAS API 取得學生名單（已加入防快取機制）
   async function loadStudentData() {
     try {
-      // 加上時間戳記，強制瀏覽器每一次都拿試算表的最新資料
       const cacheBusterUrl = `${API_URL}${API_URL.includes('?') ? '&' : '?'}_t=${new Date().getTime()}`;
-
       const response = await fetch(cacheBusterUrl);
       const data = await response.json();
       allStudentsData = data;
@@ -462,7 +471,7 @@
     `;
   }
 
- // 5. 處理「新增學生」表單提交
+  // 5. 處理「新增學生」表單提交
   document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -476,14 +485,14 @@
     const payload = {
       action: "addStudent",
       name: document.getElementById("studentName").value.trim(),
-      teacher: document.getElementById("teacherName").value.trim() || "未指定",
+      teacher: document.getElementById("teacherName").value,
       startDate: document.getElementById("startDate").value,
       totalClasses: Number(document.getElementById("totalClasses").value),
-      attendedClasses: Number(document.getElementById("attendedClasses").value)
+      // 若沒輸入預設為 0
+      attendedClasses: Number(document.getElementById("attendedClasses").value) || 0
     };
 
     try {
-      // 使用 mode: 'no-cors' 避開 GAS 的 302 重定向跨域阻擋
       await fetch(API_URL, {
         method: "POST",
         mode: "no-cors",
@@ -491,18 +500,17 @@
         body: JSON.stringify(payload)
       });
 
-      // 顯示成功訊息
       msgBox.className = "message-box message-success";
       msgBox.textContent = "✅ 新增學生成功！";
       msgBox.style.display = "block";
 
       // 重置表單
       document.getElementById("studentName").value = "";
-      document.getElementById("teacherName").value = "";
-      document.getElementById("attendedClasses").value = "0";
+      document.getElementById("teacherName").selectedIndex = 0;
+      document.getElementById("attendedClasses").value = "";
       document.getElementById("startDate").valueAsDate = new Date();
 
-      // ⚠️ 關鍵：等待 1.5 秒讓 Google Sheet 寫入完成後，自動更新前端畫面
+      // 延遲 1.5 秒更新資料庫與畫面
       setTimeout(async () => {
         await loadStudentData();
       }, 1500);
